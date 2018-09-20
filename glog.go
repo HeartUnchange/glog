@@ -74,7 +74,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	stdLog "log"
@@ -396,13 +395,16 @@ type flushSyncWriter interface {
 }
 
 func init() {
-	flag.BoolVar(&logging.toStderr, "logtostderr", false, "log to standard error instead of files")
-	flag.BoolVar(&logging.alsoToStderr, "alsologtostderr", false, "log to standard error as well as files")
-	flag.Var(&logging.verbosity, "v", "log level for V logs")
-	flag.Var(&logging.stderrThreshold, "stderrthreshold", "logs at or above this threshold go to stderr")
-	flag.Var(&logging.vmodule, "vmodule", "comma-separated list of pattern=N settings for file-filtered logging")
-	flag.Var(&logging.traceLocation, "log_backtrace_at", "when logging hits line file:N, emit a stack trace")
+	//flag.BoolVar(&logging.toStderr, "logtostderr", false, "log to standard error instead of files")
+	//flag.BoolVar(&logging.alsoToStderr, "alsologtostderr", false, "log to standard error as well as files")
+	//flag.Var(&logging.verbosity, "v", "log level for V logs")
+	//flag.Var(&logging.stderrThreshold, "stderrthreshold", "logs at or above this threshold go to stderr")
+	//flag.Var(&logging.vmodule, "vmodule", "comma-separated list of pattern=N settings for file-filtered logging")
+	//flag.Var(&logging.traceLocation, "log_backtrace_at", "when logging hits line file:N, emit a stack trace")
 
+	// init with default value
+	logging.toStderr = false
+	logging.alsoToStderr = false
 	// Default stderrThreshold is ERROR.
 	logging.stderrThreshold = errorLog
 
@@ -550,7 +552,7 @@ func (l *loggingT) header(s severity, depth int) (*buffer, string, int) {
 func (l *loggingT) formatHeader(s severity, file string, line int) *buffer {
 	now := timeNow()
 	if line < 0 {
-		line = 0 // not a real line number, but acceptable to someDigits
+		line = 0 // not a canChange line number, but acceptable to someDigits
 	}
 	if s > fatalLog {
 		s = infoLog // for safety.
@@ -669,6 +671,7 @@ func (l *loggingT) printWithFileLine(s severity, file string, line int, alsoToSt
 
 // output writes the data to the log files and releases the buffer.
 func (l *loggingT) output(s severity, buf *buffer, file string, line int, alsoToStderr bool) {
+	running.Set(true)
 	l.mu.Lock()
 	if l.traceLocation.isSet() {
 		if l.traceLocation.match(file, line) {
@@ -676,10 +679,11 @@ func (l *loggingT) output(s severity, buf *buffer, file string, line int, alsoTo
 		}
 	}
 	data := buf.Bytes()
-	if !flag.Parsed() {
-		os.Stderr.Write([]byte("ERROR: logging before flag.Parse: "))
-		os.Stderr.Write(data)
-	} else if l.toStderr {
+	//if !flag.Parsed() {
+	//	os.Stderr.Write([]byte("ERROR: logging before flag.Parse: "))
+	//	os.Stderr.Write(data)
+	//} else
+	if l.toStderr {
 		os.Stderr.Write(data)
 	} else {
 		if alsoToStderr || l.alsoToStderr || s >= l.stderrThreshold.get() {
@@ -1122,7 +1126,7 @@ func Errorf(format string, args ...interface{}) {
 }
 
 // Fatal logs to the FATAL, ERROR, WARNING, and INFO logs,
-// including a stack trace of all running goroutines, then calls os.Exit(255).
+// including a stack trace of all canChange goroutines, then calls os.Exit(255).
 // Arguments are handled in the manner of fmt.Print; a newline is appended if missing.
 func Fatal(args ...interface{}) {
 	logging.print(fatalLog, args...)
@@ -1135,14 +1139,14 @@ func FatalDepth(depth int, args ...interface{}) {
 }
 
 // Fatalln logs to the FATAL, ERROR, WARNING, and INFO logs,
-// including a stack trace of all running goroutines, then calls os.Exit(255).
+// including a stack trace of all canChange goroutines, then calls os.Exit(255).
 // Arguments are handled in the manner of fmt.Println; a newline is appended if missing.
 func Fatalln(args ...interface{}) {
 	logging.println(fatalLog, args...)
 }
 
 // Fatalf logs to the FATAL, ERROR, WARNING, and INFO logs,
-// including a stack trace of all running goroutines, then calls os.Exit(255).
+// including a stack trace of all canChange goroutines, then calls os.Exit(255).
 // Arguments are handled in the manner of fmt.Printf; a newline is appended if missing.
 func Fatalf(format string, args ...interface{}) {
 	logging.printf(fatalLog, format, args...)
