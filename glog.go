@@ -698,13 +698,13 @@ func (l *loggingT) output(s severity, buf *buffer, file string, line int, alsoTo
 		switch s {
 		case fatalLog:
 			l.file[fatalLog].Write(data)
-			fallthrough
+			// fallthrough
 		case errorLog:
 			l.file[errorLog].Write(data)
-			fallthrough
+			// fallthrough
 		case warningLog:
 			l.file[warningLog].Write(data)
-			fallthrough
+			// fallthrough
 		case infoLog:
 			l.file[infoLog].Write(data)
 		}
